@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {BehaviorSubject, Observable, shareReplay, Subscription} from 'rxjs';
+import {Observable, shareReplay, Subscription} from 'rxjs';
 import {User} from '../../models/User';
 import {UserService} from '../../services/user.service';
 

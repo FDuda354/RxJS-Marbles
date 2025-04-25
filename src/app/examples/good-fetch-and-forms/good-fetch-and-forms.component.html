@@ -1,0 +1,11 @@
+{{users$ | async | json}}
+
+<form [formGroup]="addUserForm" (ngSubmit)="onSubmit()">
+  <input type="text" formControlName="name" placeholder="Name" />
+  <input type="text" formControlName="role" placeholder="role" />
+  <button type="submit"
+          [disabled]="addUserForm.invalid || (loading$ | async)"
+  >
+    {{ (loading$ | async) ? 'dodaje...' : 'dodaj urzytkownika' }}
+  </button>
+</form>

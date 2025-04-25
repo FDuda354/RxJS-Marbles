@@ -1,8 +1,9 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {BehaviorSubject, delay, finalize, Observable, Subscription} from 'rxjs';
+import {BehaviorSubject, delay, finalize, Observable, of, Subject} from 'rxjs';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {UserService} from '../../services/user.service';
 import {User} from '../../models/User';
+import {catchError, takeUntil} from 'rxjs/operators';
 
 @Component({
   selector: 'app-good-fetch-and-forms',
@@ -11,8 +12,8 @@ import {User} from '../../models/User';
   styleUrl: './good-fetch-and-forms.component.scss'
 })
 export class GoodFetchAndFormsComponent implements OnInit, OnDestroy {
-  private subscription = new Subscription();
 
+  private destroy$ = new Subject<void>();
 
   private usersSubject = new BehaviorSubject<User[]>([]);
   users$: Observable<User[]> = this.usersSubject.asObservable();
@@ -26,15 +27,17 @@ export class GoodFetchAndFormsComponent implements OnInit, OnDestroy {
   constructor(private userService: UserService, private fb: FormBuilder) {
     this.addUserForm = this.fb.group({
       name: ['', Validators.required],
-      role: ['', Validators.required],
+      surName: ['', Validators.required],
     });
   }
 
   ngOnInit(): void {
     this.getUsers();
   }
+
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onSubmit() {
@@ -44,17 +47,26 @@ export class GoodFetchAndFormsComponent implements OnInit, OnDestroy {
       delay(1000),
       finalize(() => this.loading$.next(false))
     ).subscribe({
-      next: res => console.log('Zalogowano', res),
+      next: res => {
+        this.getUsers();
+        this.addUserForm.reset();
+      },
       error: err => {
-        console.error('Błąd logowania', err);
         this.loginError$.next(true);
       },
     });
   }
 
-  private getUsers() {
-    this.userService.fetchUsers().subscribe(users => {
-      this.usersSubject.next(users);
-    })
+  private getUsers(): void {
+    this.loading$.next(true);
+    this.loginError$.next(false);
+    this.userService.fetchUsers().pipe(
+      finalize(() => this.loading$.next(false)),
+      catchError(err => {
+        this.loginError$.next(true);
+        return of([]);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(users => this.usersSubject.next(users));
   }
 }

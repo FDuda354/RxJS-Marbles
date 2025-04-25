@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
-import {BehaviorSubject, delay, finalize, Subscription} from 'rxjs';
-import {FormBuilder, FormGroup} from '@angular/forms';
+import {BehaviorSubject, delay, finalize, Observable, Subscription} from 'rxjs';
+import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {UserService} from '../../services/user.service';
 import {User} from '../../models/User';
 
@@ -15,7 +15,7 @@ export class GoodFetchAndFormsComponent implements OnInit, OnDestroy {
 
 
   private usersSubject = new BehaviorSubject<User[]>([]);
-  users$ = this.usersSubject.asObservable();
+  users$: Observable<User[]> = this.usersSubject.asObservable();
 
   loading$ = new BehaviorSubject<boolean>(false);
   loginError$ = new BehaviorSubject<boolean>(false);
@@ -25,8 +25,8 @@ export class GoodFetchAndFormsComponent implements OnInit, OnDestroy {
 
   constructor(private userService: UserService, private fb: FormBuilder) {
     this.addUserForm = this.fb.group({
-      name: ['',],
-      role: ['USER',],
+      name: ['', Validators.required],
+      role: ['', Validators.required],
     });
   }
 
